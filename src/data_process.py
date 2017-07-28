@@ -1,6 +1,9 @@
 import gensim
 import pickle
 from src.pos_tags_dict import *
+from keras.utils import to_categorical
+import numpy as np
+import random
 class datasets:
     #单词向量化，保存到向量空间模型
     def embedding_PFR_data(self,):
@@ -79,7 +82,7 @@ class datasets:
 
 
     #获取人民日报样本数据
-    def load_PFR_data(self):
+    def load_PFR_data(self,):
         #加载向量模型和处理后的数据
         model=gensim.models.Word2Vec.load("../../../dataset/vector_models/PFR_model")
         PFR_file=open('../../../dataset/processed_data/PFR_data','rb')
@@ -95,8 +98,8 @@ class datasets:
         word_tag_dict=PFR_data['word_tag_dict']
 
         #构造数据
-        MinLen=1000
-        MaxLen=0
+        MIN_SEQ_LEN=1000
+        MAX_SEQ_LEN=0
         for sentence in sentences:
             vectors=[]
             tags=[]
@@ -106,9 +109,72 @@ class datasets:
                     tags.append(PFR_tags_dict[word_tag_dict[word]][0])
             length=len(vectors)
             if length>7 and length<30:
-                MaxLen=max(MaxLen,length)
-                MinLen=min(MinLen,length)
+                MAX_SEQ_LEN=max(MAX_SEQ_LEN,length)
+                MIN_SEQ_LEN=min(MIN_SEQ_LEN,length)
                 x.append(vectors)
                 y.append(tags)
-        print(MinLen,MaxLen)
-        return x,y,MaxLen,MinLen,model
+
+        print(MIN_SEQ_LEN,MAX_SEQ_LEN)
+
+        # 长度区间
+        len_nums= MAX_SEQ_LEN - MIN_SEQ_LEN + 1
+        output_dim=42
+
+        # 根据不同长度句子划分到不同的nd_array里
+        len_x_samples = [[] for i in range(len_nums)]
+        len_y_samples = [[] for j in range(len_nums)]
+        for sentence, tags in zip(x, y):
+            len_x_samples[len(sentence) - MIN_SEQ_LEN].append(sentence)
+            len_y_samples[len(sentence) - MIN_SEQ_LEN].append(to_categorical(tags, output_dim))
+        len_x_samples = [np.array(s) for s in len_x_samples]
+        len_y_samples = [np.array(s) for s in len_y_samples]
+
+        train_x, train_y, valid_x, valid_y, test_x, test_y = [], [], [], [], [], []
+
+        # 划分测试集验证集和测试集
+        for sample_x, sample_y in zip(len_x_samples, len_y_samples):
+            l = len(sample_x)
+            a = int(l * 8 / 10)
+            b = int(l * 1 / 10)
+            train_x.append(sample_x[:a])
+            train_y.append(sample_y[:a])
+            valid_x.append(sample_x[a + 1:a + b])
+            valid_y.append(sample_y[a + 1:a + b])
+            test_x.append(sample_x[a + b + 1:])
+            test_y.append(sample_y[a + b + 1:])
+
+        return train_x,train_y,valid_x,valid_y,test_x,test_y,len(x)
+
+    # 获得训练集
+    def generate_train_arrays(self,train_x,train_y,bacth_size):
+        len_nums=len(train_x)
+        while True:
+            index = list(range(len_nums))
+            len_left = {i: len(train_x[i]) for i in range(len_nums)}
+            random.shuffle(index)
+            while (True):
+                find = 0
+                for i in index:
+                    left = len_left[i]
+                    if left < bacth_size:
+                        continue
+                    L = len(train_x[i])
+                    x = np.array(train_x[i][L - left:L - left + bacth_size])
+                    y = np.array(train_y[i][L - left:L - left + bacth_size])
+                    len_left[i] -= bacth_size
+                    find = 1
+                    yield (x, y)
+                if find == 0: break
+
+    # 获得验证集
+    def generate_valid_arrays(self,valid_x,valid_y):
+        while 1:
+            for x, y in zip(valid_x, valid_y):
+                yield (x, y)
+
+    # 获得测试集
+    def generate_test_arrays(self,test_x,test_y):
+        while 1:
+            for x, y in zip(test_x, test_y):
+                yield (x, y)
+

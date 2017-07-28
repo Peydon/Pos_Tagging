@@ -1,52 +1,34 @@
-from keras.models import Model,load_model
-from keras.layers import LSTM,Masking,Input,Dense,Dropout,TimeDistributed
-from keras.utils import to_categorical
+from keras.models import Model
+from keras.layers import LSTM,Input,Dense,Dropout,TimeDistributed
 from src.data_process import datasets
-import numpy as np
 
 
 # 加载数据
-
 d = datasets()
-sentences, seq_tags, MAX_SEQ_LEN,MIN_SEQ_LEN,vector_model = d.load_PFR_data()
-
+train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data()
 
 # 输入输出维度
 input_dim = 200
 output_dim = 42
-# 总样本数
-samples_num = len(sentences)
 
-# 训练，测试数目 9:1
-train_num = int(samples_num * 9 / 10)
+#bacth
+bacth_size=32
 
-# 样本序列
-x_samples = np.zeros(shape=(samples_num, MAX_SEQ_LEN, input_dim))
-y_samples = np.zeros(shape=(samples_num, MAX_SEQ_LEN, output_dim))
+# LSTM
+hidden_unit = 200
 
-for i in range(len(sentences)):
-    for j in range(len(sentences[i])):
-        x_samples[i][j] = sentences[i][j]
-        y_samples[i][j] = to_categorical(seq_tags[i][j], output_dim)
+# Dense
+drop_out_rate = 0.5
 
-# 划分训练和测试样本 9:1
-x_train = x_samples[:train_num]
-y_train = y_samples[:train_num]
-x_test = x_samples[train_num + 1:]
-y_test = y_samples[train_num + 1:]
+#steps_epoch
+steps_epoch=int(samples/bacth_size)
+
 
 def train():
-    # LSTM
-    hidden_unit = 200
-    # dropout
-    drop_out_rate = 0.25
-
     # 输入为一个句子的单词序列
     input_seq = Input(shape=(None, input_dim))
-    # masking
-    mask_out = Masking(mask_value=0.0)(input_seq)
     # LSTM
-    lstm_out = LSTM(units=hidden_unit, return_sequences=True)(mask_out)
+    lstm_out = LSTM(units=hidden_unit, return_sequences=True)(input_seq)
     # drop_out
     drop_out = Dropout(drop_out_rate)(lstm_out)
     # softmax
@@ -58,17 +40,15 @@ def train():
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
-    model.fit(
-        x=x_train, y=y_train, epochs=15
-        , batch_size=32, validation_split=0.1, shuffle=0, verbose=2
-    )
+    model.fit_generator(generator=d.generate_train_arrays(train_x, train_y, bacth_size=bacth_size, ),
+                        epochs=20,
+                        steps_per_epoch=steps_epoch,
+                        validation_data=d.generate_valid_arrays(valid_x, valid_y),
+                        validation_steps=len(valid_x),
+                        verbose=2)
+
+    # 保存验证
     model.save('../../../result/lstm.h5')
-    print(model.evaluate(x=x_test, y=y_test, verbose=1))
+    print(model.evaluate_generator(generator=d.generate_test_arrays(test_x, test_y), steps=len(test_x)))
 
-
-def test():
-    model=load_model('../../../result/lstm.h5')
-    print(model.evaluate(x=x_test,y=y_test))
 train()
-
-test()
