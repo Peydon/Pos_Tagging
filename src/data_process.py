@@ -9,15 +9,13 @@ class datasets:
     def embedding_PFR_data(self,):
 
         #开始处理原始数据
-        PFR_file=open("../../../dataset/raw_data/199801.txt")
+        PFR_file=open("../../../dataset/raw_data/PFR_data.txt")
         lines=PFR_file.readlines()
         PFR_file.close()
 
         #句子集合和单词-词性字典,最长句子长度
         setences=[]
         word_tag_dict={}
-        MAX_SEQ_LEN=0
-        MIN_SEQ_LEN=100000
 
         #开始处理每一行，对应的文本是每一段
         for line in lines:
@@ -42,7 +40,11 @@ class datasets:
                     pair,phrase_tag=pair.split("]")
                     phrase_end=1
                 #切分单词和词性
-                word,tag=pair.split("/")
+                word=tag=""
+                try:
+                    word,tag=pair.split("/")
+                except:
+                    print(pair)
                 words.append(word)
                 word_tag_dict[word]=tag
 

@@ -5,7 +5,9 @@ from src.data_process import datasets
 
 # 加载数据
 d = datasets()
+d.embedding_PFR_data()
 train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data()
+
 
 # 输入输出维度
 input_dim = 200
