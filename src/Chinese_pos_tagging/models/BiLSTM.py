@@ -5,7 +5,7 @@ from src.data_process import datasets
 
 # 加载数据
 d = datasets()
-train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data()
+train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('199801')
 
 # 输入输出维度
 input_dim = 200
@@ -26,7 +26,7 @@ steps_epoch=int(samples/bacth_size)
 def train():
     model=Sequential(
         [
-        Bidirectional(LSTM(units=hidden_unit, return_sequences=True),input_shape=(None,input_dim),merge_mode='concat'),
+        Bidirectional(LSTM(units=hidden_unit, return_sequences=True),input_shape=(None,input_dim),merge_mode='sum'),
         Dropout(drop_out_rate),
         TimeDistributed(Dense(output_dim,activation='softmax'))
         ]
@@ -57,7 +57,7 @@ def re_train():
     print(model.evaluate_generator(generator=d.generate_test_arrays(test_x, test_y), steps=len(test_x)))
 
 def predict(nd_array):
-    model=load_model('../../../result/lstm.h5')
+    model=load_model('../../../result/Bilstm.h5')
     model.predict_classes()
 
 

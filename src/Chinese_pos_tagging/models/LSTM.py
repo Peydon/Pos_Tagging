@@ -5,8 +5,7 @@ from src.data_process import datasets
 
 # 加载数据
 d = datasets()
-d.embedding_PFR_data()
-train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data()
+train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('199801')
 
 
 # 输入输出维度
@@ -62,8 +61,4 @@ def predict(nd_array):
     model=load_model('../../../result/lstm.h5')
     model.predict_classes()
 
-
-
-
-train()
 

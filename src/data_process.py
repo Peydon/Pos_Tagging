@@ -9,12 +9,12 @@ class datasets:
     def embedding_PFR_data(self,):
 
         #开始处理原始数据
-        PFR_file=open("../../../dataset/raw_data/PFR_data.txt")
+        PFR_file=open("../../../dataset/raw_data/199801.txt",encoding='utf8')
         lines=PFR_file.readlines()
         PFR_file.close()
 
         #句子集合和单词-词性字典,最长句子长度
-        setences=[]
+        sentences=[]
         word_tag_dict={}
 
         #开始处理每一行，对应的文本是每一段
@@ -57,37 +57,38 @@ class datasets:
                     phrase=""
                     phrase_start=phrase_end=0
 
-            setence=[]
+            sentence=[]
             #对每一段话再根据句子划分符号细分成每一句
             for word in words:
-                if (word in ['。','；','！','？','、','，']):
-                    setences.append(setence)
-                    setence=[]
+                if (word in ['。','；','！','？','、','，','：']and len(sentence)>6):
+                    sentences.append(sentence)
+                    sentence=[]
 
                 #去除标点符号
                 elif word_tag_dict[word] != 'w' and word !='':
-                    setence.append(word)
-            setences.append(setence)
+                    sentence.append(word)
+            if len(sentence)>0:
+                sentences.append(sentence)
 
         #处理后的数据由一个字典保存，包括句子集和单词-词性字典
         PFR_data={
-            "sentences":setences,
+            "sentences":sentences,
             "word_tag_dict":word_tag_dict,
         }
 
         #保存处理过后的数据和向量空间模型
-        model=gensim.models.Word2Vec(setences,size=200,min_count=10)
-        model.save("../../../dataset/vector_models/PFR_model")
-        PFR_file=open('../../../dataset/processed_data/PFR_data','wb')
+        model=gensim.models.Word2Vec(sentences,size=200,min_count=10)
+        model.save("../../../dataset/vector_models/199801_model")
+        PFR_file=open('../../../dataset/processed_data/199801_data','wb')
         pickle.dump(PFR_data,file=PFR_file)
         PFR_file.close()
 
 
     #获取人民日报样本数据
-    def load_PFR_data(self,):
+    def load_PFR_data(self,modelname):
         #加载向量模型和处理后的数据
-        model=gensim.models.Word2Vec.load("../../../dataset/vector_models/PFR_model")
-        PFR_file=open('../../../dataset/processed_data/PFR_data','rb')
+        model=gensim.models.Word2Vec.load("../../../dataset/vector_models/"+modelname+"_model")
+        PFR_file=open('../../../dataset/processed_data/'+modelname+'_data','rb')
         PFR_data=pickle.load(PFR_file)
 
         #输入输出
@@ -102,6 +103,7 @@ class datasets:
         #构造数据
         MIN_SEQ_LEN=1000
         MAX_SEQ_LEN=0
+        num=0
         for sentence in sentences:
             vectors=[]
             tags=[]
@@ -109,14 +111,16 @@ class datasets:
                 if word in model.wv.vocab:
                     vectors.append(model[word])
                     tags.append(PFR_tags_dict[word_tag_dict[word]][0])
+
             length=len(vectors)
-            if length>7 and length<30:
+            if length>6 and length<30:
                 MAX_SEQ_LEN=max(MAX_SEQ_LEN,length)
                 MIN_SEQ_LEN=min(MIN_SEQ_LEN,length)
+                num+=1
                 x.append(vectors)
                 y.append(tags)
 
-        print(MIN_SEQ_LEN,MAX_SEQ_LEN)
+        print(MIN_SEQ_LEN,MAX_SEQ_LEN,num)
 
         # 长度区间
         len_nums= MAX_SEQ_LEN - MIN_SEQ_LEN + 1
