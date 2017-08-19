@@ -5,6 +5,7 @@ from src.data_process import datasets
 
 # 加载数据
 d = datasets()
+d.embedding_PFR_data()
 train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('199801')
 
 
@@ -19,7 +20,7 @@ bacth_size=32
 hidden_unit = 100
 
 # Dense
-drop_out_rate = 0.25
+drop_out_rate = 0.5
 
 #steps_epoch
 steps_epoch=int(samples/bacth_size)
@@ -37,7 +38,7 @@ def train():
                   metrics=['accuracy'])
     model.summary()
     model.fit_generator(generator=d.generate_train_arrays(train_x, train_y, bacth_size=bacth_size, ),
-                        epochs=100,
+                        epochs=40,
                         steps_per_epoch=steps_epoch,
                         validation_data=d.generate_valid_arrays(valid_x, valid_y),
                         validation_steps=len(valid_x),
@@ -61,4 +62,4 @@ def predict(nd_array):
     model=load_model('../../../result/lstm.h5')
     model.predict_classes()
 
-
+train()

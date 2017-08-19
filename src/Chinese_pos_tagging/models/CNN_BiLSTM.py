@@ -46,7 +46,7 @@ def train():
     # 结构
     model.summary()
     model.fit_generator(generator=d.generate_train_arrays(train_x,train_y,bacth_size=bacth_size,),
-                        epochs=50,
+                        epochs=40,
                         steps_per_epoch=steps_epoch,
                         validation_data=d.generate_valid_arrays(valid_x,valid_y),
                         validation_steps=len(valid_x),
@@ -70,3 +70,4 @@ def re_train():
 def predict(nd_array):
     model=load_model('../../../result/CNN_bilstm.h5')
     model.predict_classes()
+train()

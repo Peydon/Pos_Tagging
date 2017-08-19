@@ -60,7 +60,7 @@ class datasets:
             sentence=[]
             #对每一段话再根据句子划分符号细分成每一句
             for word in words:
-                if (word in ['。','；','！','？','、','，','：']and len(sentence)>6):
+                if (word in ['。','；','！','？','、','，','：']and len(sentence)>5):
                     sentences.append(sentence)
                     sentence=[]
 
@@ -113,7 +113,7 @@ class datasets:
                     tags.append(PFR_tags_dict[word_tag_dict[word]][0])
 
             length=len(vectors)
-            if length>6 and length<30:
+            if length>5 and length<30:
                 MAX_SEQ_LEN=max(MAX_SEQ_LEN,length)
                 MIN_SEQ_LEN=min(MIN_SEQ_LEN,length)
                 num+=1
@@ -183,4 +183,3 @@ class datasets:
         while 1:
             for x, y in zip(test_x, test_y):
                 yield (x, y)
-

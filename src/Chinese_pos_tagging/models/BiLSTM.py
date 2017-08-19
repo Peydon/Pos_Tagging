@@ -36,7 +36,7 @@ def train():
                   metrics=['accuracy'])
     model.summary()
     model.fit_generator(generator=d.generate_train_arrays(train_x, train_y, bacth_size=bacth_size, ),
-                        epochs=100,
+                        epochs=40,
                         steps_per_epoch=steps_epoch,
                         validation_data=d.generate_valid_arrays(valid_x, valid_y),
                         validation_steps=len(valid_x),
@@ -53,7 +53,7 @@ def re_train():
                         validation_data=d.generate_valid_arrays(valid_x, valid_y),
                         validation_steps=len(valid_x),
                         verbose=2)
-    model.save('../../../result/lstm.h5')
+    model.save('../../../result/Bilstm.h5')
     print(model.evaluate_generator(generator=d.generate_test_arrays(test_x, test_y), steps=len(test_x)))
 
 def predict(nd_array):
