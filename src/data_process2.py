@@ -9,7 +9,7 @@ class datasets:
     def embedding_PFR_data(self,):
 
         #开始处理原始数据
-        PFR_file=open("../../../dataset/raw_data/199801.txt",encoding='utf8')
+        PFR_file=open("../../../dataset/raw_data/PFR_data.txt",encoding='utf8')
         lines=PFR_file.readlines()
         PFR_file.close()
 
@@ -96,8 +96,8 @@ class datasets:
 
         #保存处理过后的数据和向量空间模型
         model=gensim.models.Word2Vec(sentences,size=200,min_count=10)
-        model.save("../../../dataset/vector_models/199801_model")
-        PFR_file=open('../../../dataset/processed_data/199801_data','wb')
+        model.save("../../../dataset/vector_models/PFR_model")
+        PFR_file=open('../../../dataset/processed_data/PFR_data','wb')
         pickle.dump(PFR_data,file=PFR_file)
         PFR_file.close()
 
@@ -109,6 +109,9 @@ class datasets:
         PFR_file=open('../../../dataset/processed_data/'+modelname+'_data','rb')
         PFR_data=pickle.load(PFR_file)
 
+
+
+
         #输入输出
         #x是句子集，每个句子由多个200维单词构成
         #y是词性，对应每个单词的词性
@@ -119,6 +122,20 @@ class datasets:
         sen_tags=PFR_data['sen_tags']
         word_tag_dict=PFR_data['word_tag_dict']
 
+        embedding_matrix = np.zeros((len(word_tag_dict),200))
+        index=0
+        for word in word_tag_dict.keys():
+            if word in model.wv.vocab:
+                # words not found in embedding index will be all-zeros.
+                embedding_matrix[index] = model[word]
+            index+=1
+
+        word_index={}
+        index=0
+        for word in word_tag_dict.keys():
+            word_index[word]=index
+            index+=1
+
         #构造数据
         MIN_SEQ_LEN=1000
         MAX_SEQ_LEN=0
@@ -128,7 +145,7 @@ class datasets:
             tags=[]
             for word,tag in zip(sentence,origin_tags):
                 if word in model.wv.vocab:
-                    vectors.append(model[word])
+                    vectors.append(word_index[word])
                     tags.append(PFR_tags_dict[tag][0])
                     #tags.append(PFR_tags_dict[word_tag_dict[word]][0])
 
@@ -170,7 +187,7 @@ class datasets:
             test_x.append(sample_x[a + b + 1:])
             test_y.append(sample_y[a + b + 1:])
 
-        return train_x,train_y,valid_x,valid_y,test_x,test_y,len(x)
+        return embedding_matrix,train_x,train_y,valid_x,valid_y,test_x,test_y,len(x)
 
     # 获得训练集
     def generate_train_arrays(self,train_x,train_y,bacth_size):

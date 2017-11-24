@@ -1,17 +1,17 @@
 from keras.models import load_model,Sequential
-from keras.layers import Conv1D,LSTM,ZeroPadding1D,Dense,Dropout,TimeDistributed,Bidirectional
+from keras.layers import Conv1D,LSTM,ZeroPadding1D,Dense,Dropout,TimeDistributed,Bidirectional,BatchNormalization,Activation
 from src.data_process import datasets
 
 # 加载数据
 d = datasets()
-train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('199801')
+train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('PFR')
 
 # 输入输出维度
 input_dim = 200
-output_dim = 42
+output_dim = 41
 
 #bacth
-bacth_size=32
+bacth_size=256
 
 # CNN
 filters_num=200
@@ -20,7 +20,7 @@ pool_size=3
 strides=1
 
 # LSTM
-hidden_unit = 100
+hidden_unit = 200
 
 # Dense
 drop_out_rate = 0.5
@@ -34,19 +34,23 @@ def train():
         [
             ZeroPadding1D(padding=(1, 1),input_shape=(None,input_dim)),
             Conv1D(filters=filters_num, kernel_size=kernel_size, padding='valid', activation='relu', use_bias=1, ),
-            Bidirectional(LSTM(units=hidden_unit, return_sequences=True), input_shape=(None, input_dim),merge_mode='sum'),
+            BatchNormalization(),
+            Bidirectional(LSTM(units=hidden_unit, return_sequences=True,recurrent_dropout=drop_out_rate), input_shape=(None, input_dim),merge_mode='concat'),
+            BatchNormalization(),
             Dropout(drop_out_rate),
-            TimeDistributed(Dense(output_dim, activation="softmax"))
+            TimeDistributed(Dense(output_dim)),
+            BatchNormalization(),
+            Activation("softmax")
         ]
     )
     # 编译
-    model.compile(optimizer='Rmsprop',
+    model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
     # 结构
     model.summary()
     model.fit_generator(generator=d.generate_train_arrays(train_x,train_y,bacth_size=bacth_size,),
-                        epochs=40,
+                        epochs=50,
                         steps_per_epoch=steps_epoch,
                         validation_data=d.generate_valid_arrays(valid_x,valid_y),
                         validation_steps=len(valid_x),

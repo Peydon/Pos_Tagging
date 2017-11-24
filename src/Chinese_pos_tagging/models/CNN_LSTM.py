@@ -4,14 +4,14 @@ from src.data_process import datasets
 
 # 加载数据
 d = datasets()
-train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('199801')
+train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('PFR')
 
 # 输入输出维度
 input_dim = 200
 output_dim = 42
 
 #bacth
-bacth_size=32
+bacth_size=256
 
 # CNN
 filters_num=200

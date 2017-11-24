@@ -5,7 +5,7 @@ from keras_contrib.layers.crf import CRF
 
 # 加载数据
 d = datasets()
-train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('199801')
+train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('PFR')
 
 # 输入输出维度
 input_dim = 200

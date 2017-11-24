@@ -1,20 +1,20 @@
 from keras.models import load_model,Sequential
-from keras.layers import LSTM,Dense,Dropout,TimeDistributed
+from keras.layers import LSTM,Dense,Dropout,TimeDistributed,BatchNormalization,Activation
 from src.data_process import datasets
 
 
 # 加载数据
 d = datasets()
-d.embedding_PFR_data()
-train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('199801')
+
+train_x,train_y,valid_x,valid_y,test_x,test_y,samples= d.load_PFR_data('PFR')
 
 
 # 输入输出维度
 input_dim = 200
-output_dim = 42
+output_dim = 41
 
 #bacth
-bacth_size=32
+bacth_size=512
 
 # LSTM
 hidden_unit = 100
@@ -28,9 +28,12 @@ steps_epoch=int(samples/bacth_size)
 def train():
     model=Sequential(
         [
-        LSTM(units=hidden_unit, return_sequences=True,input_shape=(None,input_dim)),
+        LSTM(units=hidden_unit, return_sequences=True,recurrent_dropout=drop_out_rate,input_shape=(None,input_dim)),
+        BatchNormalization(),
         Dropout(drop_out_rate),
-        TimeDistributed(Dense(output_dim,activation='softmax'))
+        TimeDistributed(Dense(output_dim)),
+        BatchNormalization(),
+        Activation('softmax')
         ]
     )
     model.compile(optimizer='rmsprop',
